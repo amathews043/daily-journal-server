@@ -25,7 +25,7 @@ def get_all_entries():
         dataset = db_cursor.fetchall()
 
         for row in dataset: 
-            entry = Entries(row['id'], row['concept'], row['entry'], row['mood_id'], row['date'])
+            entry = Entries(row['id'], row['concept'], row['entry'], row['mood_id'], row['date'],)
 
             entries.append(entry.__dict__)
 
@@ -53,3 +53,13 @@ def get_single_entry(id):
         entry = Entries(data['id'], data['concept'], data['entry'], data['mood_id'], data['date'])
 
         return entry.__dict__
+    
+def delete_entry(id): 
+    """function to delete a journal entry"""
+    with sqlite3.connect("./dailyjournal.sqlite3") as conn: 
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+        DELETE FROM Entries 
+        WHERE id = ? 
+        """, (id, ))
