@@ -11,14 +11,14 @@ INSERT INTO Moods VALUES (null, "Angry");
 INSERT INTO Moods VALUES (null, "Ok"); 
 
 
-SELECT * FROM Moods
+SELECT * FROM Entries
 
 
 CREATE TABLE Entries (
     `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     `concept` TEXT NOT NULL,
     `entry` TEXT NOT NULL,
-    `mood_id` TEXT NOT NULL, 
+    `mood_id` INTEGER NOT NULL, 
     `date` TIMESTAMP NOT NULL,
     FOREIGN KEY(`mood_id`) REFERENCES `Moods`(`id`)
 );
@@ -34,3 +34,4 @@ INSERT INTO Entries VALUES (null, "Python", "Why did it take so long for python 
 INSERT INTO Entries VALUES (null, "JavaScript", "Dealing with Date is terrible. Why do you have to add an entire package just to format a date. It makes no sense.",
 3, "Wed Sep 15 2021 10:14:05 "); 
 
+DROP TABLE Entries

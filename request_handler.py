@@ -1,16 +1,22 @@
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from views import get_single_entry, get_all_entries, get_all_moods, get_single_mood, delete_entry
+from views import get_single_entry, get_all_entries, get_all_moods, get_single_mood, delete_entry, create_entry, update_entry
+from views import get_entry_by_search
+from urllib.parse import urlparse, parse_qs
 
 class HandleRequests(BaseHTTPRequestHandler): 
     """Controls the functionality of any GET, PUT, POST, DELETE requests to the server
     """
 
     def parse_url(self, path): 
-
-        path_params = path.split("/")
+        parsed_url = urlparse(path)
+        path_params = parsed_url.path.split('/')
         resource = path_params[1]
+
+        if parsed_url.query:
+            query = parse_qs(parsed_url.query)
+            return (resource, query)
 
         pk = None
         try: 
@@ -19,25 +25,85 @@ class HandleRequests(BaseHTTPRequestHandler):
             pass
         return (resource, pk)
     
+    def do_POST(self):
+        self._set_headers(201)
+        content_len = int(self.headers.get('content-length', 0))
+        post_body = self.rfile.read(content_len)
+
+        # Convert JSON string to a Python dictionary
+        post_body = json.loads(post_body)
+
+        # Parse the URL
+        (resource, id) = self.parse_url(self.path)
+
+        # Initialize new animal
+        new_entry = None
+
+        # Add a new animal to the list. Don't worry about
+        # the orange squiggle, you'll define the create_animal
+        # function next.
+        if resource == "entries":
+            new_entry = create_entry(post_body)
+
+        # Encode the new animal and send in response
+        self.wfile.write(json.dumps(new_entry).encode())
+    
     def do_GET(self):
         """Handles GET requests to the server """
         response = {}
-        self._set_headers(200)
-        (resource, id) = self.parse_url(self.path)
+        parsed = self.parse_url(self.path)
 
-        if resource == "entries": 
-            if id is not None: 
-                response = get_single_entry(id)
-            else: 
-                response = get_all_entries()
+        if '?' not in self.path:
+            (resource, id ) = parsed
 
-        if resource == "moods":
-            if id is not None: 
-                response = get_single_mood(id)
-            else: 
-                response = get_all_moods()
+            if resource == "entries": 
+                if id is not None: 
+                    self._set_headers(200)
+                    response = get_single_entry(id)
+                    if response is None:
+                        self._set_headers(404)
+                        response = {
+                            "message": f"There is no entry with that id"}
+                else: 
+                    self._set_headers(200)
+                    response = get_all_entries()
+
+            if resource == "moods":
+                if id is not None:
+                    self._set_headers(200)
+                    response = get_single_mood(id)
+                else: 
+                    self._set_headers(200)
+                    response = get_all_moods()
+            
+        else: 
+            (resource, query) = parsed
+            self._set_headers(200)
+
+            if query.get('q') and resource == 'entries':
+                response = get_entry_by_search(query['q'][0])
 
         self.wfile.write(json.dumps(response).encode())
+
+    def do_PUT(self): 
+        self._set_headers(204)
+        content_len = int(self.headers.get('content-length', 0))
+        post_body = self.rfile.read(content_len)
+        post_body = json.loads(post_body)
+
+        (resource, id) = self.parse_url(self.path)
+
+        success = False
+
+        if resource == "entries": 
+            success = update_entry(id, post_body)
+        
+        if success: 
+            self._set_headers(204)
+        else: 
+            self._set_headers(400)
+        
+        self.wfile.write("".encode())
 
     def _set_headers(self, status):
         """Sets the status code, Content-Type and Access-Control-Allow-Origin
