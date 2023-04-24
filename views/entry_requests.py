@@ -2,7 +2,7 @@ import sqlite3
 import json
 from datetime import datetime
 
-from models import Entries
+from models import Entries, Moods
 
 def get_all_entries(): 
     """function to get all the journal entries from the database"""
@@ -13,12 +13,16 @@ def get_all_entries():
 
         db_cursor.execute("""
         SELECT 
-            id, 
-            concept, 
-            entry, 
-            mood_id, 
-            date
-        FROM Entries
+            e.id as entry_id, 
+            e.concept, 
+            e.entry, 
+            e.mood_id, 
+            e.date,
+            m.id as mood_id,
+            m.label
+        FROM Entries e
+        JOIN Moods m
+            ON e.mood_id = m.id
         """)
 
         entries = []
@@ -26,9 +30,12 @@ def get_all_entries():
         dataset = db_cursor.fetchall()
 
         for row in dataset: 
-            entry = Entries(row['id'], row['concept'], row['entry'], row['mood_id'], row['date'],)
+            entry = Entries(row['entry_id'], row['concept'], row['entry'], row['mood_id'], row['date'],)
+            mood = Moods(row['mood_id'], row['label'])
+            entry.mood=mood.__dict__
 
             entries.append(entry.__dict__)
+
 
         return entries
     
@@ -40,18 +47,25 @@ def get_single_entry(id):
 
         db_cursor.execute("""
         SELECT 
-            id, 
-            concept, 
-            entry, 
-            mood_id, 
-            date
-        FROM Entries
-        WHERE id = ?
+            e.id as entry_id, 
+            e.concept, 
+            e.entry, 
+            e.mood_id, 
+            e.date,
+            m.id as mood_id,
+            m.label
+        FROM Entries e
+        JOIN Moods m
+            ON e.mood_id = m.id
+        WHERE e.id = ?
         """, (id, ))
 
         data = db_cursor.fetchone()
+        print(data)
 
-        entry = Entries(data['id'], data['concept'], data['entry'], data['mood_id'], data['date'])
+        entry = Entries(data['entry_id'], data['concept'], data['entry'], data['mood_id'], data['date'],)
+        mood = Moods(data['mood_id'], data['label'])
+        entry.mood = mood.__dict__
 
         return entry.__dict__
     

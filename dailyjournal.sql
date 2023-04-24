@@ -11,7 +11,7 @@ INSERT INTO Moods VALUES (null, "Angry");
 INSERT INTO Moods VALUES (null, "Ok"); 
 
 
-SELECT * FROM Entries
+SELECT * FROM Moods
 
 
 CREATE TABLE Entries (
