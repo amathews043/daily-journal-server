@@ -2,7 +2,53 @@ import sqlite3
 import json
 from datetime import datetime
 
-from models import Entries, Moods
+from models import Entries, Moods, Tag
+
+def get_all_entry_tags(): 
+    with sqlite3.connect("./dailyjournal.sqlite3") as conn:
+
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+        SELECT 
+            t.id,
+            t.name,
+            et.entry_id
+        FROM Tags t
+        JOIN Entry_tags et
+            ON et.tag_id = t.id
+        """)
+
+        entries_to_tag_names = {}
+
+        dataset = db_cursor.fetchall()
+        for row in dataset:
+            if row['entry_id'] in entries_to_tag_names:
+                entries_to_tag_names[row['entry_id']].append(row['name'])
+            else:
+                entries_to_tag_names[row['entry_id']] = [row['name']]
+
+        return entries_to_tag_names
+
+def get_all_tags():
+    with sqlite3.connect("./dailyjournal.sqlite3") as conn:
+
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+        SELECT * FROM tags
+        """)
+
+        dataset = db_cursor.fetchall()
+        tags = []
+
+        for row in dataset:
+            tag = Tag(row['id'], row['name'])
+
+            tags.append(tag.__dict__)
+        return tags
 
 def get_all_entries(): 
     """function to get all the journal entries from the database"""
@@ -28,9 +74,12 @@ def get_all_entries():
         entries = []
 
         dataset = db_cursor.fetchall()
-
+        entries_to_tag_names_map = get_all_entry_tags()
         for row in dataset: 
             entry = Entries(row['entry_id'], row['concept'], row['entry'], row['mood_id'], row['date'],)
+
+            entry.tags = entries_to_tag_names_map[entry.id]
+        
             mood = Moods(row['mood_id'], row['label'])
             entry.mood=mood.__dict__
 
@@ -91,6 +140,13 @@ def create_entry(entry):
 
         id = db_cursor.lastrowid
         entry['id'] = id 
+
+        for tag in entry['tags']:
+            db_cursor.execute("""
+            INSERT INTO Entry_Tags
+                (entry_id, tag_id)
+            VALUES (?, ?)
+            """, (id, tag))
 
     return entry
 

@@ -35,3 +35,53 @@ INSERT INTO Entries VALUES (null, "JavaScript", "Dealing with Date is terrible. 
 3, "Wed Sep 15 2021 10:14:05 "); 
 
 DROP TABLE Entries
+
+CREATE TABLE Tags (
+    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
+    `name` TEXT NOT NULL
+)
+
+CREATE TABLE Entry_Tags (
+    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
+    `entry_id` INTEGER NOT NULL, 
+    `tag_id` INTEGER NOT NULL, 
+    FOREIGN KEY(`entry_id`) REFERENCES `Entries`(`id`),
+    FOREIGN KEY(`tag_id`) REFERENCES `Tags`(`id`)
+)
+
+INSERT INTO Tags VALUES (null, "JavaScript");
+INSERT INTO Tags VALUES (null, "Python");
+INSERT INTO Tags Values (null, "React");
+INSERT INTO Tags VALUES (null, "Django");
+
+SELECT * FROM Entries JOIN Moods on moods.id = Entries.mood_id
+
+        SELECT 
+            e.id as entry_id, 
+            e.concept, 
+            e.entry, 
+            e.mood_id, 
+            e.date,
+            m.id as mood_id,
+            m.label,
+            et.id,
+            et.tag_id,
+            t.id as tag_id,
+            t.name as tag_name
+        FROM Entries e
+        JOIN Moods m
+            ON e.mood_id = m.id
+        LEFT JOIN Entry_Tags et 
+            ON et.entry_id = e.id
+        LEFT JOIN Tags t
+            ON t.id = et.tag_id
+
+SELECT * FROM Entry_Tags
+
+        SELECT 
+            t.id,
+            t.name,
+            et.entry_id
+        FROM Tags t
+        JOIN Entry_tags et
+            ON et.tag_id = t.id

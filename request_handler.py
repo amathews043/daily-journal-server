@@ -2,7 +2,7 @@ import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from views import get_single_entry, get_all_entries, get_all_moods, get_single_mood, delete_entry, create_entry, update_entry
-from views import get_entry_by_search
+from views import get_entry_by_search, get_all_entry_tags, get_all_tags
 from urllib.parse import urlparse, parse_qs
 
 class HandleRequests(BaseHTTPRequestHandler): 
@@ -75,7 +75,14 @@ class HandleRequests(BaseHTTPRequestHandler):
                 else: 
                     self._set_headers(200)
                     response = get_all_moods()
-            
+
+            if resource == "tags":
+                self._set_headers(200)
+                response = get_all_tags()
+                
+            if resource == "entryTags":
+                self._set_headers(200)
+                response = get_all_entry_tags()
         else: 
             (resource, query) = parsed
             self._set_headers(200)
