@@ -141,7 +141,7 @@ def create_entry(entry):
         id = db_cursor.lastrowid
         entry['id'] = id 
 
-        for tag in entry['tags']:
+        for tag in entry['tag_id']:
             db_cursor.execute("""
             INSERT INTO Entry_Tags
                 (entry_id, tag_id)
